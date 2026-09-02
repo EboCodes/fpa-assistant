@@ -1,0 +1,101 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15-alpine
+    container_name: edu_assistant_db
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: educational_assistant
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./database/schema/initial_schema.sql:/docker-entrypoint-initdb.d/init.sql
+      - ./database/schema/knowledge_base_seed.sql:/docker-entrypoint-initdb.d/seed.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - edu_network
+
+  # Node.js Backend
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: edu_assistant_backend
+    environment:
+      NODE_ENV: development
+      PORT: 5000
+      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/educational_assistant
+      JWT_SECRET: your_jwt_secret_key_change_in_production
+      CLIENT_URL: http://localhost:5173
+      AI_SERVICE_URL: http://ai-service:5001
+      OPENAI_API_KEY: ${OPENAI_API_KEY}
+    ports:
+      - "5000:5000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      - ./backend:/app
+      - /app/node_modules
+    networks:
+      - edu_network
+    command: npm run dev
+
+  # Python AI Service
+  ai-service:
+    build:
+      context: ./ai-service
+      dockerfile: Dockerfile
+    container_name: edu_assistant_ai
+    environment:
+      AI_SERVICE_PORT: 5001
+      DEBUG: "False"
+      BACKEND_URL: http://backend:5000
+      LLM_PROVIDER: ${LLM_PROVIDER:-gemini}
+      OPENAI_API_KEY: ${OPENAI_API_KEY}
+      GOOGLE_API_KEY: ${GOOGLE_API_KEY}
+      LLM_MODEL: ${LLM_MODEL:-models/gemini-3.6-flash}
+      TEMPERATURE: 0.7
+    ports:
+      - "5001:5001"
+    depends_on:
+      - backend
+    volumes:
+      - ./ai-service:/app
+    networks:
+      - edu_network
+    command: python src/main.py
+
+  # React Frontend (optional - usually served separately)
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: edu_assistant_frontend
+    environment:
+      VITE_API_URL: http://backend:5000
+    ports:
+      - "5173:5173"
+    depends_on:
+      - backend
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    networks:
+      - edu_network
+    command: npm run dev -- --host 0.0.0.0
+
+volumes:
+  postgres_data:
+
+networks:
+  edu_network:
+    driver: bridge
