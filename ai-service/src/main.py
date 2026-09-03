@@ -210,7 +210,7 @@ def internal_error(error):
     return jsonify({'error': 'Internal server error'}), 500
 
 if __name__ == '__main__':
-    PORT = int(os.getenv('AI_SERVICE_PORT', '5001'))
+    PORT = int(os.getenv('PORT', os.getenv('AI_SERVICE_PORT', '5001')))
     DEBUG = os.getenv('DEBUG', 'false').strip().lower() in {'1', 'true', 'yes', 'on'}
     
     logger.info(f"🚀 AI Service starting on http://localhost:{PORT}")
