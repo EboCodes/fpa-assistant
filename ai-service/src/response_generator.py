@@ -29,9 +29,9 @@ class ResponseGenerator:
         self.google_api_key = os.getenv("GOOGLE_API_KEY")
 
         self.backend_url = os.getenv(
-            "BACKEND_URL",
-            "http://localhost:5000"
-        ).rstrip("/")
+            'BACKEND_URL',
+            'https://fpa-backend-s09g.onrender.com'
+        ).rstrip('/')
 
         # Gemini model fallback order
         self.gemini_models = [
