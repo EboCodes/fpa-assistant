@@ -31,3 +31,7 @@ python-dateutil==2.8.2
 
 # For production
 gunicorn==21.2.0
+
+huggingface-hub==0.16.4
+
+huggingface-hub==0.16.4
