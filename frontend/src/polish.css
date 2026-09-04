@@ -1,0 +1,391 @@
+/* FPA Assistant responsive and interaction refinements.
+   Keeps the existing institutional visual language intact. */
+
+/* Prevent long institutional URLs and generated text from breaking layouts. */
+.formatted-doc,
+.dialog-bubble,
+.doc-p,
+.doc-ol,
+.doc-ul,
+.doc-link {
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+.doc-link {
+  text-decoration-thickness: 1px;
+  text-underline-offset: 2px;
+}
+
+/* More controlled interaction feedback without an AI-style visual treatment. */
+.directory-card,
+.topic-btn,
+.site-nav-item,
+.btn-cta-primary,
+.btn-signin-nav,
+.btn-logout,
+.admin-portal-link {
+  transition: border-color 160ms ease, background-color 160ms ease,
+    color 160ms ease, box-shadow 160ms ease, transform 160ms ease;
+}
+
+.directory-card:hover {
+  transform: translateY(-2px);
+}
+
+.topic-btn:focus-visible,
+.site-nav-item:focus-visible,
+.btn-cta-primary:focus-visible,
+.btn-signin-nav:focus-visible,
+.btn-logout:focus-visible,
+.admin-portal-link:focus-visible,
+.directory-card:focus-visible,
+.doc-link:focus-visible {
+  outline: 3px solid rgba(0, 77, 46, 0.2);
+  outline-offset: 2px;
+}
+
+/* Tablet */
+@media (max-width: 1024px) {
+  .site-header-inner,
+  .landing-layout,
+  .chat-layout,
+  .auth-canvas,
+  .admin-layout,
+  .kb-layout {
+    width: min(100% - 32px, 1180px);
+  }
+
+  .hero-title {
+    max-width: 850px;
+    font-size: clamp(2rem, 4vw, 3rem);
+  }
+
+  .hero-lead {
+    max-width: 760px;
+  }
+
+  .dialog-bubble {
+    max-width: min(82%, 760px);
+  }
+}
+
+/* Mobile */
+@media (max-width: 768px) {
+  html {
+    overflow-x: hidden;
+  }
+
+  body {
+    min-width: 0;
+    overflow-x: hidden;
+  }
+
+  .site-header {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    backdrop-filter: blur(8px);
+  }
+
+  .site-header-inner {
+    width: calc(100% - 24px);
+    padding: 10px 0;
+    gap: 8px;
+  }
+
+  .site-brand {
+    min-width: 0;
+    width: 100%;
+  }
+
+  .brand-meta {
+    min-width: 0;
+  }
+
+  .brand-name,
+  .brand-inst {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .brand-name {
+    font-size: 0.96rem;
+  }
+
+  .brand-inst {
+    font-size: 0.68rem;
+  }
+
+  .site-nav {
+    width: 100%;
+    justify-content: flex-start;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    overflow-y: hidden;
+    padding: 2px 0 3px;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .site-nav::-webkit-scrollbar {
+    display: none;
+  }
+
+  .site-nav-item,
+  .admin-portal-link,
+  .btn-signin-nav,
+  .btn-logout {
+    flex: 0 0 auto;
+    white-space: nowrap;
+  }
+
+  .auth-status-wrap {
+    flex: 0 0 auto;
+  }
+
+  .user-shortname {
+    display: none;
+  }
+
+  .landing-layout {
+    width: calc(100% - 24px);
+    padding-top: 18px;
+  }
+
+  .institutional-hero {
+    padding: 28px 0 24px;
+  }
+
+  .institution-flag {
+    line-height: 1.45;
+    font-size: 0.72rem;
+  }
+
+  .hero-title {
+    margin-top: 12px;
+    font-size: clamp(1.75rem, 8vw, 2.35rem);
+    line-height: 1.12;
+    letter-spacing: -0.025em;
+  }
+
+  .hero-lead {
+    font-size: 0.94rem;
+    line-height: 1.65;
+  }
+
+  .hero-cta-row {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .btn-cta-primary {
+    width: 100%;
+    justify-content: center;
+    min-height: 46px;
+  }
+
+  .frequent-topics-wrap {
+    width: 100%;
+    align-items: stretch;
+  }
+
+  .topics-heading {
+    margin-bottom: 4px;
+  }
+
+  .topic-btn {
+    width: 100%;
+    min-height: 44px;
+    text-align: left;
+  }
+
+  .directory-section {
+    padding-top: 26px;
+  }
+
+  .directory-header h2 {
+    font-size: 1.35rem;
+    line-height: 1.25;
+  }
+
+  .directory-header p {
+    font-size: 0.88rem;
+    line-height: 1.6;
+  }
+
+  .directory-card {
+    min-height: 0;
+    padding: 18px;
+  }
+
+  .card-title {
+    font-size: 1.05rem;
+  }
+
+  .card-text {
+    font-size: 0.88rem;
+    line-height: 1.6;
+  }
+
+  /* Chat should use the entire small viewport rather than behaving like a
+     compressed desktop dashboard. */
+  .chat-layout {
+    width: 100%;
+    min-height: calc(100dvh - 108px);
+  }
+
+  .desk-sidebar {
+    width: min(86vw, 320px);
+    max-width: 320px;
+  }
+
+  .chat-main,
+  .dialog-window,
+  .dialog-messages,
+  .chat-composer {
+    min-width: 0;
+  }
+
+  .dialog-topbar {
+    padding: 12px 14px;
+  }
+
+  .dialog-topbar h1,
+  .dialog-title {
+    font-size: 0.94rem;
+  }
+
+  .dialog-messages {
+    padding: 16px 12px 20px;
+  }
+
+  .dialog-entry {
+    width: 100%;
+    margin-bottom: 18px;
+  }
+
+  .dialog-bubble {
+    width: min(92%, 720px);
+    max-width: 92%;
+    padding: 13px 14px;
+    border-radius: 8px;
+  }
+
+  .dialog-user .dialog-bubble {
+    margin-left: auto;
+  }
+
+  .dialog-speaker-badge {
+    font-size: 0.68rem;
+    margin-bottom: 5px;
+  }
+
+  .formatted-doc {
+    font-size: 0.91rem;
+    line-height: 1.65;
+  }
+
+  .doc-ol,
+  .doc-ul {
+    padding-left: 20px;
+  }
+
+  .chat-composer {
+    padding: 10px 12px 12px;
+  }
+
+  .chat-composer form {
+    gap: 8px;
+  }
+
+  .chat-composer textarea,
+  .chat-composer input {
+    min-height: 46px;
+    font-size: 16px;
+  }
+
+  .chat-composer button {
+    min-width: 46px;
+    min-height: 46px;
+  }
+
+  .official-disclaimer-strip {
+    margin-top: 22px;
+    padding: 14px;
+  }
+
+  .official-disclaimer-strip p {
+    font-size: 0.76rem;
+    line-height: 1.55;
+  }
+
+  .auth-canvas {
+    width: calc(100% - 24px);
+    padding: 24px 0;
+  }
+
+  .auth-box {
+    width: 100%;
+    padding: 20px 16px;
+  }
+
+  .form-two-col {
+    grid-template-columns: 1fr;
+  }
+
+  /* Keep admin/data tables usable on narrow screens. */
+  .admin-table-wrap,
+  .table-wrap,
+  .data-table-wrap {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+}
+
+/* Small phones */
+@media (max-width: 420px) {
+  .brand-crest-box {
+    width: 34px;
+    height: 34px;
+  }
+
+  .crest-letters {
+    font-size: 0.72rem;
+  }
+
+  .brand-inst {
+    display: none;
+  }
+
+  .hero-title {
+    font-size: 1.72rem;
+  }
+
+  .hero-lead {
+    font-size: 0.9rem;
+  }
+
+  .dialog-bubble {
+    width: 96%;
+    max-width: 96%;
+  }
+
+  .chat-composer {
+    padding-left: 8px;
+    padding-right: 8px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .directory-card,
+  .topic-btn,
+  .site-nav-item,
+  .btn-cta-primary,
+  .btn-signin-nav,
+  .btn-logout,
+  .admin-portal-link {
+    transition: none;
+  }
+}
