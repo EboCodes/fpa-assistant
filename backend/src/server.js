@@ -217,6 +217,8 @@ app.post(
       conversationId: c?.id || null,
       messageId,
       response,
+      sources: p.sources || [],
+      response_mode: p.response_mode || "institutional",
       intent: p.intent || null,
       confidence: p.confidence || null,
       suggested_kb_entries: p.suggested_kb_entries || [],

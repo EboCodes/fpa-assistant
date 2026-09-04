@@ -118,6 +118,92 @@ class ResponseGenerator:
         return None
 
     # ============================================================
+    # KB SUFFICIENCY & SOURCE EXTRACTION HELPERS
+    # ============================================================
+
+    def _is_kb_sufficient(
+        self,
+        kb_entries: List[Dict],
+        query: str
+    ) -> bool:
+        """
+        Determine if internal Knowledge Base records contain sufficient,
+        high-confidence information to answer the student's query.
+        """
+        if not kb_entries:
+            return False
+
+        query_clean = query.lower().strip()
+        query_words = set(
+            word for word in re.findall(r"\b[a-zA-Z0-9]+\b", query_clean)
+            if len(word) > 2
+        )
+
+        if not query_words:
+            return False
+
+        top_entry = kb_entries[0]
+        question = str(top_entry.get("question", "")).lower()
+        answer = str(top_entry.get("answer", "")).lower()
+        keywords = str(top_entry.get("keywords", "")).lower()
+
+        # If exact query string matches question or keywords
+        if query_clean in question or query_clean in keywords:
+            return True
+
+        # Calculate word match ratio
+        matched = 0
+        for word in query_words:
+            if word in question or word in keywords or word in answer:
+                matched += 1
+
+        match_ratio = matched / len(query_words)
+
+        # Require at least 50% keyword match or minimum 2 matched significant words
+        return match_ratio >= 0.5 or (len(query_words) >= 2 and matched >= 2)
+
+    def _extract_sources_from_gemini_response(
+        self,
+        response: Any
+    ) -> List[Dict[str, str]]:
+        """Extract structured web sources from Gemini grounding metadata."""
+        sources = []
+        if not response:
+            return sources
+
+        try:
+            candidates = getattr(response, "candidates", []) or []
+            if not candidates:
+                return sources
+
+            cand = candidates[0]
+            gm = getattr(cand, "grounding_metadata", None)
+            if not gm:
+                return sources
+
+            chunks = getattr(gm, "grounding_chunks", []) or []
+            seen_urls = set()
+
+            for chunk in chunks:
+                web = getattr(chunk, "web", None)
+                if web:
+                    uri = str(getattr(web, "uri", "") or "").strip()
+                    title = str(getattr(web, "title", "") or "").strip()
+                    if uri and uri not in seen_urls:
+                        seen_urls.add(uri)
+                        if not title:
+                            # Clean domain as fallback title
+                            title = uri.split("//")[-1].split("/")[0]
+                        sources.append({
+                            "title": title,
+                            "url": uri
+                        })
+        except Exception as e:
+            logger.warning("Error extracting grounding sources: %s", str(e))
+
+        return sources
+
+    # ============================================================
     # MAIN RESPONSE GENERATION
     # ============================================================
 
@@ -126,23 +212,31 @@ class ResponseGenerator:
         user_message: str,
         intent: Dict[str, Any],
         context: Dict = None
-    ) -> str:
+    ) -> Dict[str, Any]:
 
         context = context or {}
 
         query = user_message.strip()
 
         if not query:
-            return (
-                "Please enter a question and I will help you with "
-                "information about The Federal Polytechnic, Ado-Ekiti."
-            )
+            return {
+                "answer": (
+                    "Please enter a question and I will help you with "
+                    "information about The Federal Polytechnic, Ado-Ekiti."
+                ),
+                "sources": [],
+                "mode": "institutional"
+            }
 
         # Handle greetings, thanks and identity questions first
         conversational_reply = self._check_conversational_greeting(query)
 
         if conversational_reply:
-            return conversational_reply
+            return {
+                "answer": conversational_reply,
+                "sources": [],
+                "mode": "institutional"
+            }
 
         # Retrieve relevant institutional knowledge
         kb_entries = self._retrieve_kb_entries(
@@ -151,12 +245,15 @@ class ResponseGenerator:
             top_n=6
         )
 
+        is_sufficient = self._is_kb_sufficient(kb_entries, query)
+
         # Build prompt
         context_text = self._build_context(
-            kb_entries,
+            kb_entries if is_sufficient else [],
             query,
             intent,
-            context=context
+            context=context,
+            use_web_search=not is_sufficient
         )
 
         # ========================================================
@@ -165,15 +262,16 @@ class ResponseGenerator:
 
         if self.llm_provider == "gemini" and self.google_api_key:
 
-            response = self._generate_with_gemini_cascade(
+            result = self._generate_with_gemini_cascade(
                 query,
                 context_text,
                 intent,
-                kb_entries=kb_entries
+                kb_entries=kb_entries,
+                enable_grounding=not is_sufficient
             )
 
-            if response:
-                return response
+            if result and isinstance(result, dict) and result.get("answer"):
+                return result
 
         # ========================================================
         # OPENAI FALLBACK
@@ -181,25 +279,35 @@ class ResponseGenerator:
 
         if self.llm_provider == "openai" and self.openai_api_key:
 
-            response = self._generate_with_openai(
+            answer = self._generate_with_openai(
                 query,
                 context_text,
                 intent,
                 kb_entries=kb_entries
             )
 
-            if response:
-                return response
+            if answer:
+                return {
+                    "answer": answer,
+                    "sources": [],
+                    "mode": "institutional" if is_sufficient else "web_assisted"
+                }
 
         # ========================================================
         # LOCAL FALLBACK
         # ========================================================
 
-        return self._generate_with_template(
+        fallback_answer = self._generate_with_template(
             kb_entries,
             intent,
             query=query
         )
+
+        return {
+            "answer": fallback_answer,
+            "sources": [],
+            "mode": "institutional" if is_sufficient else "web_assisted"
+        }
 
     # ============================================================
     # KNOWLEDGE BASE RETRIEVAL
@@ -368,7 +476,8 @@ class ResponseGenerator:
         kb_entries: List[Dict],
         query: str,
         intent: Dict,
-        context: Dict = None
+        context: Dict = None,
+        use_web_search: bool = False
     ) -> str:
 
         context = context or {}
@@ -440,7 +549,21 @@ IMPORTANT RULES:
 
 18. If several verified records are relevant, combine them
     into ONE coherent answer instead of dumping separate FAQs.
+"""
 
+        if use_web_search:
+            context_str += """
+19. WEB SEARCH & SOURCE GUIDELINES:
+    No matching verified institutional record was found in the internal database.
+    Use Google Search grounding to retrieve accurate, current information.
+    Prioritize official sources in this order:
+      1. Federal Polytechnic Ado-Ekiti official site (fedpolyado.edu.ng)
+      2. Nigerian government official portals (.gov.ng)
+      3. JAMB (jamb.gov.ng)
+      4. NYSC (nysc.gov.ng)
+      5. WAEC / NECO / official exam bodies
+      6. Other reputable educational organizations
+    CRITICAL RULE: Distinguish between official FPA policies vs external organization rules (e.g., NYSC, JAMB). Never present external organization rules as if issued directly by FPA.
 """
 
         # --------------------------------------------------------
@@ -537,10 +660,7 @@ IMPORTANT RULES:
 
             context_str += """
 No directly matching verified institutional record
-was found.
-
-Do not invent an answer. If necessary, direct the student
-to the official school website or student portal.
+was found in internal database.
 """
 
         context_str += """
@@ -563,8 +683,9 @@ points before finishing.
         query: str,
         context: str,
         intent: Dict,
-        kb_entries: List[Dict] = None
-    ) -> Optional[str]:
+        kb_entries: List[Dict] = None,
+        enable_grounding: bool = False
+    ) -> Optional[Dict[str, Any]]:
 
         try:
 
@@ -585,7 +706,7 @@ points before finishing.
 
         preferred = os.getenv(
             "LLM_MODEL",
-            "models/gemini-flash-lite-latest"
+            "models/gemini-3.6-flash"
         ).strip()
 
         models_to_try = [preferred]
@@ -600,76 +721,95 @@ points before finishing.
             if not model_name.startswith("models/"):
                 model_name = f"models/{model_name}"
 
-            try:
+            # If grounding requested, try with grounding first, then without tools on error
+            tool_modes = ["google_search_retrieval"] if enable_grounding else [None]
 
-                logger.info(
-                    "Trying Gemini model: %s",
-                    model_name
-                )
-
-                model = genai.GenerativeModel(
-                    model_name=model_name
-                )
-
-                response = model.generate_content(
-                    context,
-                    generation_config={
-                        "temperature": 0.25,
-                        "max_output_tokens": 1000,
-                    },
-                    request_options={
-                        "timeout": 15
-                    }
-                )
-
-                if not response:
-                    continue
-
-                text = getattr(
-                    response,
-                    "text",
-                    ""
-                )
-
-                if not text:
-                    continue
-
-                text = self._clean_response(text)
-
-                if self._is_complete_response(text):
+            for tool_opt in tool_modes:
+                try:
 
                     logger.info(
-                        "Gemini generated a valid response."
+                        "Trying Gemini model: %s (grounding: %s)",
+                        model_name,
+                        bool(tool_opt)
                     )
 
-                    return text
+                    if tool_opt:
+                        model = genai.GenerativeModel(
+                            model_name=model_name,
+                            tools=tool_opt
+                        )
+                    else:
+                        model = genai.GenerativeModel(
+                            model_name=model_name
+                        )
 
-                logger.warning(
-                    "Gemini returned an incomplete or malformed response "
-                    "from %s. Trying next model.",
-                    model_name
-                )
+                    response = model.generate_content(
+                        context,
+                        generation_config={
+                            "temperature": 0.25,
+                            "max_output_tokens": 1000,
+                        },
+                        request_options={
+                            "timeout": 20
+                        }
+                    )
 
-            except Exception as e:
+                    if not response:
+                        continue
 
-                logger.warning(
-                    "Gemini model %s failed: %s",
-                    model_name,
-                    str(e)[:200]
-                )
+                    text = getattr(
+                        response,
+                        "text",
+                        ""
+                    )
 
-                continue
+                    if not text:
+                        continue
+
+                    text = self._clean_response(text)
+
+                    if self._is_complete_response(text):
+
+                        logger.info(
+                            "Gemini generated a valid response."
+                        )
+
+                        sources = (
+                            self._extract_sources_from_gemini_response(response)
+                            if tool_opt else []
+                        )
+
+                        mode = "web_assisted" if (tool_opt and sources) or enable_grounding else "institutional"
+
+                        return {
+                            "answer": text,
+                            "sources": sources,
+                            "mode": mode
+                        }
+
+                    logger.warning(
+                        "Gemini returned an incomplete or malformed response "
+                        "from %s. Trying next option.",
+                        model_name
+                    )
+
+                except Exception as e:
+
+                    logger.warning(
+                        "Gemini model %s (grounding=%s) failed: %s",
+                        model_name,
+                        bool(tool_opt),
+                        str(e)[:200]
+                    )
+
+                    continue
 
         logger.warning(
             "All Gemini models failed or returned invalid responses. "
             "Using local fallback."
         )
 
-        return self._generate_with_template(
-            kb_entries or [],
-            intent,
-            query=query
-        )
+        return None
 
     # ============================================================
     # OPENAI

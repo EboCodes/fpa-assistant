@@ -1672,3 +1672,59 @@ a {
     grid-template-columns: 1fr;
   }
 }
+
+/* Web Grounding Sources & References */
+.dialog-sources-container {
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px dashed var(--border-card, #e2e8f0);
+}
+
+.dialog-sources-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--text-muted, #64748b);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-bottom: 8px;
+}
+
+.dialog-sources-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.dialog-source-card {
+  display: flex;
+  flex-direction: column;
+  padding: 8px 12px;
+  background: var(--bg-surface, #f8fafc);
+  border: 1px solid var(--border-card, #e2e8f0);
+  border-radius: 6px;
+  text-decoration: none;
+  transition: border-color 0.15s ease, background-color 0.15s ease;
+}
+
+.dialog-source-card:hover {
+  background: #ffffff;
+  border-color: var(--navy-dark, #0f172a);
+}
+
+.source-title {
+  font-size: 0.86rem;
+  font-weight: 600;
+  color: var(--navy-dark, #0f172a);
+  line-height: 1.3;
+}
+
+.source-url {
+  font-size: 0.76rem;
+  color: var(--text-muted, #64748b);
+  word-break: break-all;
+  margin-top: 2px;
+}
+

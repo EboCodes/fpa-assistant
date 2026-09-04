@@ -67,11 +67,20 @@ def process_message():
         intent = intent_recognizer.recognize(processed)
         
         # Step 3: Generate response
-        response = response_generator.generate(
+        response_obj = response_generator.generate(
             user_message=user_message,
             intent=intent,
             context=context
         )
+        
+        if isinstance(response_obj, dict):
+            response_text = response_obj.get('answer', '')
+            sources = response_obj.get('sources', [])
+            response_mode = response_obj.get('mode', 'institutional')
+        else:
+            response_text = str(response_obj)
+            sources = []
+            response_mode = 'institutional'
         
         return jsonify({
             'success': True,
@@ -80,7 +89,9 @@ def process_message():
             'processed_message': processed,
             'intent': intent['name'],
             'confidence': intent['confidence'],
-            'response': response,
+            'response': response_text,
+            'sources': sources,
+            'response_mode': response_mode,
             'suggested_kb_entries': intent.get('suggestions', [])
         }), 200
         

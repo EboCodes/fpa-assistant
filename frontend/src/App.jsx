@@ -863,6 +863,8 @@ function Chat({ user }) {
           content: data.response,
           messageId: data.messageId,
           intent: data.intent,
+          sources: data.sources || [],
+          responseMode: data.response_mode || 'institutional',
         },
       ]);
     } catch (err) {
@@ -1050,6 +1052,28 @@ function Chat({ user }) {
 
                 <div className="dialog-bubble">
                   <FormattedText text={m.content} />
+
+                  {m.role === 'assistant' && m.sources && m.sources.length > 0 && (
+                    <div className="dialog-sources-container">
+                      <div className="dialog-sources-header">
+                        <Icons.Search /> Sources & References
+                      </div>
+                      <div className="dialog-sources-list">
+                        {m.sources.map((src, sIdx) => (
+                          <a
+                            key={sIdx}
+                            href={src.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="dialog-source-card"
+                          >
+                            <span className="source-title">{src.title}</span>
+                            <span className="source-url">{src.url}</span>
+                          </a>
+                        ))}
+                      </div>
+                    </div>
+                  )}
 
                   {m.role === 'assistant' &&
                     m.messageId && (
