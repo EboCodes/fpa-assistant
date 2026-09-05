@@ -2,23 +2,26 @@ name: Keep FPA Render Services Awake
 
 on:
   schedule:
-    # Run every 10 minutes so the free Render web services receive traffic
-    # before the 15-minute inactivity spin-down threshold.
-    - cron: '*/10 * * * *'
+    # Run every 5 minutes so the free Render web services receive traffic
+    # well before the 15-minute inactivity spin-down threshold.
+    - cron: '*/5 * * * *'
   workflow_dispatch:
 
 jobs:
   keep-alive:
     runs-on: ubuntu-latest
-    timeout-minutes: 2
+    timeout-minutes: 5
 
     steps:
-      - name: Wake backend
+      - name: Wake FPA Backend API
         run: |
-          curl --fail --silent --show-error --max-time 60 \
+          curl --fail --silent --show-error --max-time 120 --retry 3 --retry-delay 5 \
+            -H "User-Agent: FPA-Assistant-KeepAlive/1.0" \
             https://fpa-backend-s09g.onrender.com/health
 
-      - name: Wake AI service
+      - name: Wake FPA AI Service
         run: |
-          curl --fail --silent --show-error --max-time 60 \
+          curl --fail --silent --show-error --max-time 120 --retry 3 --retry-delay 5 \
+            -H "User-Agent: FPA-Assistant-KeepAlive/1.0" \
             https://fpa-ai-service.onrender.com/health
+

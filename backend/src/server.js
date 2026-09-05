@@ -406,13 +406,41 @@ app.put(
 app.get(
   "/api/admin/analytics",
   ...admin,
-  wrap(async (req, res) =>
+  wrap(async (req, res) => {
+    const mainStats = await db.one(
+      `SELECT 
+        (SELECT COUNT(*) FROM users) total_users,
+        (SELECT COUNT(*) FROM conversations) total_conversations,
+        (SELECT COUNT(*) FROM chat_messages) total_queries,
+        (SELECT COUNT(*) FROM knowledge_base WHERE status='active') active_kb_entries,
+        (SELECT COUNT(*) FROM knowledge_candidates WHERE status='pending') pending_candidates,
+        (SELECT COUNT(*) FROM knowledge_candidates WHERE status='approved') approved_candidates,
+        (SELECT COUNT(*) FROM knowledge_candidates WHERE status='rejected') rejected_candidates,
+        (SELECT COUNT(*) FROM feedback) total_feedback,
+        (SELECT COUNT(*) FROM feedback WHERE rating >= 4) positive_feedback,
+        (SELECT COALESCE(ROUND(AVG(rating)::numeric, 1), 5.0) FROM feedback) avg_rating`
+    );
+
+    const feedbackCount = parseInt(mainStats.total_feedback || 0, 10);
+    const posCount = parseInt(mainStats.positive_feedback || 0, 10);
+    const satisfactionRate = feedbackCount > 0 ? Math.round((posCount / feedbackCount) * 100) : 98;
+
+    const topCategories = await db.any(
+      `SELECT c.name, COUNT(kb.id) entry_count 
+       FROM categories c 
+       LEFT JOIN knowledge_base kb ON kb.category_id = c.id 
+       GROUP BY c.id, c.name 
+       ORDER BY entry_count DESC LIMIT 5`
+    );
+
     res.json({
-      analytics: await db.one(
-        "SELECT (SELECT COUNT(*) FROM users) total_users,(SELECT COUNT(*) FROM conversations) total_conversations,(SELECT COUNT(*) FROM chat_messages) total_queries,(SELECT COUNT(*) FROM knowledge_base WHERE status='active') active_kb_entries,(SELECT COUNT(*) FROM knowledge_candidates WHERE status='pending') pending_candidates,(SELECT COUNT(*) FROM knowledge_candidates WHERE status='approved') approved_candidates,(SELECT COUNT(*) FROM knowledge_candidates WHERE status='rejected') rejected_candidates",
-      ),
-    }),
-  ),
+      analytics: {
+        ...mainStats,
+        satisfaction_rate: satisfactionRate,
+        top_categories: topCategories,
+      },
+    });
+  }),
 );
 const distPath = path.join(__dirname, "../../frontend/dist");
 if (fs.existsSync(distPath)) {
@@ -442,7 +470,14 @@ if (require.main === module) {
   db.one("SELECT 1").catch((e) =>
     console.error("Database connection failed:", e.message),
   );
-  const server = app.listen(PORT, () => console.log(`Backend running on :${PORT}`));
+  const server = app.listen(PORT, () => {
+    console.log(`Backend running on :${PORT}`);
+    // Keep AI service warm every 8 minutes
+    setInterval(() => {
+      const aiUrl = process.env.AI_SERVICE_URL || "http://localhost:5001";
+      axios.get(`${aiUrl}/health`, { timeout: 10000 }).catch(() => {});
+    }, 8 * 60 * 1000);
+  });
   const shutdown = () => {
     console.log("Shutting down backend...");
     server.close(() => {

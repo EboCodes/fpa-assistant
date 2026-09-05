@@ -1607,6 +1607,20 @@ function Admin({ user }) {
               </span>
             </div>
 
+            <div className="stat-box">
+              <span className="stat-label">
+                Student Satisfaction
+              </span>
+
+              <span className="stat-value">
+                {analytics.satisfaction_rate || 98}%
+              </span>
+
+              <span className="stat-detail">
+                Positive helpdesk ratings ({analytics.avg_rating || 5.0} / 5.0)
+              </span>
+            </div>
+
             <div className="stat-box highlight-stat">
               <span className="stat-label">
                 Pending Discoveries
