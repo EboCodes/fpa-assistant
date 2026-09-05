@@ -212,6 +212,24 @@ app.post(
         [c.id],
       );
     }
+    if (p.response_mode === "web_assisted" && response.length > 20) {
+      const topSource = (p.sources && p.sources[0]) || {};
+      await db
+        .none(
+          "INSERT INTO knowledge_candidates(category_id,question,answer,source,source_url,confidence,status) VALUES($1,$2,$3,$4,$5,$6,'pending')",
+          [
+            p.category_id || 1,
+            message.trim(),
+            response.trim(),
+            topSource.title || "Web Search Discovery",
+            topSource.url || null,
+            p.confidence || 0.85,
+          ],
+        )
+        .catch((e) =>
+          console.error("Error queueing knowledge candidate:", e.message),
+        );
+    }
     res.json({
       success: true,
       conversationId: c?.id || null,
@@ -316,12 +334,82 @@ app.delete(
   }),
 );
 app.get(
+  "/api/admin/candidates",
+  ...admin,
+  wrap(async (req, res) => {
+    res.json({
+      data: await db.any(
+        "SELECT kc.*, c.name category_name, u.name reviewer_name FROM knowledge_candidates kc LEFT JOIN categories c ON c.id=kc.category_id LEFT JOIN users u ON u.id=kc.reviewed_by ORDER BY CASE WHEN kc.status='pending' THEN 0 ELSE 1 END, kc.created_at DESC",
+      ),
+    });
+  }),
+);
+app.post(
+  "/api/admin/candidates/:id/approve",
+  ...admin,
+  wrap(async (req, res) => {
+    const candidate = await db.oneOrNone(
+      "SELECT * FROM knowledge_candidates WHERE id=$1",
+      [req.params.id],
+    );
+    if (!candidate)
+      return res.status(404).json({ error: "Candidate not found" });
+    const catId = candidate.category_id || 1;
+    const keywords = (candidate.question + " " + (candidate.source || ""))
+      .toLowerCase()
+      .slice(0, 255);
+    const kb = await db.one(
+      "INSERT INTO knowledge_base(category_id,question,answer,keywords,source,status,created_by) VALUES($1,$2,$3,$4,$5,'active',$6) RETURNING *",
+      [
+        catId,
+        candidate.question,
+        candidate.answer,
+        keywords,
+        candidate.source || "Web Discovery (Admin Approved)",
+        req.user.id,
+      ],
+    );
+    await db.none(
+      "UPDATE knowledge_candidates SET status='approved',reviewed_by=$1,reviewed_at=CURRENT_TIMESTAMP WHERE id=$2",
+      [req.user.id, req.params.id],
+    );
+    res.json({ success: true, kbEntry: kb });
+  }),
+);
+app.post(
+  "/api/admin/candidates/:id/reject",
+  ...admin,
+  wrap(async (req, res) => {
+    const data = await db.oneOrNone(
+      "UPDATE knowledge_candidates SET status='rejected',reviewed_by=$1,reviewed_at=CURRENT_TIMESTAMP WHERE id=$2 RETURNING *",
+      [req.user.id, req.params.id],
+    );
+    if (!data)
+      return res.status(404).json({ error: "Candidate not found" });
+    res.json({ success: true, candidate: data });
+  }),
+);
+app.put(
+  "/api/admin/candidates/:id",
+  ...admin,
+  wrap(async (req, res) => {
+    const { question, answer, categoryId, source, sourceUrl } = req.body;
+    const data = await db.oneOrNone(
+      "UPDATE knowledge_candidates SET question=COALESCE($1,question),answer=COALESCE($2,answer),category_id=COALESCE($3,category_id),source=COALESCE($4,source),source_url=COALESCE($5,source_url) WHERE id=$6 RETURNING *",
+      [question, answer, categoryId, source, sourceUrl, req.params.id],
+    );
+    if (!data)
+      return res.status(404).json({ error: "Candidate not found" });
+    res.json({ success: true, candidate: data });
+  }),
+);
+app.get(
   "/api/admin/analytics",
   ...admin,
   wrap(async (req, res) =>
     res.json({
       analytics: await db.one(
-        "SELECT (SELECT COUNT(*) FROM users) total_users,(SELECT COUNT(*) FROM conversations) total_conversations,(SELECT COUNT(*) FROM chat_messages) total_queries,(SELECT COUNT(*) FROM knowledge_base WHERE status='active') active_kb_entries",
+        "SELECT (SELECT COUNT(*) FROM users) total_users,(SELECT COUNT(*) FROM conversations) total_conversations,(SELECT COUNT(*) FROM chat_messages) total_queries,(SELECT COUNT(*) FROM knowledge_base WHERE status='active') active_kb_entries,(SELECT COUNT(*) FROM knowledge_candidates WHERE status='pending') pending_candidates,(SELECT COUNT(*) FROM knowledge_candidates WHERE status='approved') approved_candidates,(SELECT COUNT(*) FROM knowledge_candidates WHERE status='rejected') rejected_candidates",
       ),
     }),
   ),

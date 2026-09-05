@@ -1348,11 +1348,13 @@ function KnowledgeBase({ user }) {
 
 function Admin({ user }) {
   const [items, setItems] = useState([]);
+  const [candidates, setCandidates] = useState([]);
   const [categories, setCategories] = useState([]);
   const [analytics, setAnalytics] = useState(null);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [editingItem, setEditingItem] = useState(null);
+  const [activeTab, setActiveTab] = useState('kb'); // 'kb' or 'candidates'
   const [statusFilter, setStatusFilter] = useState('all');
   const [categoryFilter, setCategoryFilter] =
     useState('all');
@@ -1374,11 +1376,12 @@ function Admin({ user }) {
     setLoading(true);
 
     try {
-      const [kbRes, catRes, statRes] =
+      const [kbRes, catRes, statRes, candRes] =
         await Promise.all([
           api.get('/api/admin/kb'),
           api.get('/api/categories'),
           api.get('/api/admin/analytics'),
+          api.get('/api/admin/candidates'),
         ]);
 
       setItems(kbRes.data.data || []);
@@ -1386,10 +1389,29 @@ function Admin({ user }) {
       setAnalytics(
         statRes.data.analytics || null
       );
+      setCandidates(candRes.data.data || []);
     } catch {
       // Error
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleApproveCandidate = async (id) => {
+    try {
+      await api.post(`/api/admin/candidates/${id}/approve`);
+      loadData();
+    } catch {
+      alert('Failed to approve candidate to Knowledge Base.');
+    }
+  };
+
+  const handleRejectCandidate = async (id) => {
+    try {
+      await api.post(`/api/admin/candidates/${id}/reject`);
+      loadData();
+    } catch {
+      alert('Failed to reject candidate.');
     }
   };
 
@@ -1584,139 +1606,246 @@ function Admin({ user }) {
                 Verified data entries
               </span>
             </div>
+
+            <div className="stat-box highlight-stat">
+              <span className="stat-label">
+                Pending Discoveries
+              </span>
+
+              <span className="stat-value">
+                {analytics.pending_candidates || 0}
+              </span>
+
+              <span className="stat-detail">
+                Awaiting admin review
+              </span>
+            </div>
           </section>
         )}
 
-        <div className="admin-table-bar">
-          <div className="table-filter-pair">
-            <div className="select-field">
-              <label>Category:</label>
+        <div className="admin-tabs-row">
+          <button
+            className={`admin-tab-btn ${
+              activeTab === 'kb' ? 'tab-active' : ''
+            }`}
+            onClick={() => setActiveTab('kb')}
+          >
+            Verified Knowledge Base ({items.length})
+          </button>
 
-              <select
-                value={categoryFilter}
-                onChange={(e) =>
-                  setCategoryFilter(e.target.value)
-                }
-              >
-                <option value="all">
-                  All Categories
-                </option>
+          <button
+            className={`admin-tab-btn ${
+              activeTab === 'candidates' ? 'tab-active' : ''
+            }`}
+            onClick={() => setActiveTab('candidates')}
+          >
+            Pending Discoveries Queue (
+            {candidates.filter((c) => c.status === 'pending').length})
+          </button>
+        </div>
 
-                {categories.map((c) => (
-                  <option key={c.id} value={c.id}>
-                    {c.name}
-                  </option>
+        {activeTab === 'candidates' ? (
+          <div className="candidates-list-container">
+            {candidates.length === 0 ? (
+              <div className="repo-state-empty">
+                <p>No web discoveries currently queued for review.</p>
+              </div>
+            ) : (
+              <div className="candidates-cards-grid">
+                {candidates.map((cand) => (
+                  <article
+                    className={`candidate-entry-card status-${cand.status}`}
+                    key={cand.id}
+                  >
+                    <div className="candidate-card-meta">
+                      <span className={`candidate-badge status-badge-${cand.status}`}>
+                        {cand.status.toUpperCase()}
+                      </span>
+
+                      <span className="entry-cat-tag">
+                        {cand.category_name || 'General Inquiry'}
+                      </span>
+
+                      {cand.source_url && (
+                        <a
+                          href={cand.source_url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="candidate-source-url"
+                        >
+                          Source: {cand.source || 'Web Search'}
+                        </a>
+                      )}
+                    </div>
+
+                    <h3 className="entry-card-question">
+                      {cand.question}
+                    </h3>
+
+                    <div className="entry-card-answer">
+                      <FormattedText text={cand.answer} />
+                    </div>
+
+                    {cand.status === 'pending' && (
+                      <div className="candidate-card-actions">
+                        <button
+                          className="btn-approve-action"
+                          onClick={() =>
+                            handleApproveCandidate(cand.id)
+                          }
+                        >
+                          <Icons.Check /> Approve to Verified KB
+                        </button>
+
+                        <button
+                          className="btn-reject-action"
+                          onClick={() =>
+                            handleRejectCandidate(cand.id)
+                          }
+                        >
+                          Reject Discovery
+                        </button>
+                      </div>
+                    )}
+                  </article>
                 ))}
-              </select>
+              </div>
+            )}
+          </div>
+        ) : (
+          <>
+            <div className="admin-table-bar">
+              <div className="table-filter-pair">
+                <div className="select-field">
+                  <label>Category:</label>
+
+                  <select
+                    value={categoryFilter}
+                    onChange={(e) =>
+                      setCategoryFilter(e.target.value)
+                    }
+                  >
+                    <option value="all">
+                      All Categories
+                    </option>
+
+                    {categories.map((c) => (
+                      <option key={c.id} value={c.id}>
+                        {c.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="select-field">
+                  <label>Status:</label>
+
+                  <select
+                    value={statusFilter}
+                    onChange={(e) =>
+                      setStatusFilter(e.target.value)
+                    }
+                  >
+                    <option value="all">
+                      All Statuses
+                    </option>
+
+                    <option value="active">Active</option>
+                    <option value="inactive">
+                      Inactive
+                    </option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="table-count-tag">
+                {filteredItems.length} records displayed
+              </div>
             </div>
 
-            <div className="select-field">
-              <label>Status:</label>
+            <div className="admin-table-frame">
+              <table className="admin-grid-table">
+                <thead>
+                  <tr>
+                    <th>Category</th>
+                    <th>Inquiry &amp; Content</th>
+                    <th>Source</th>
+                    <th>Status</th>
+                    <th>Modified</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
 
-              <select
-                value={statusFilter}
-                onChange={(e) =>
-                  setStatusFilter(e.target.value)
-                }
-              >
-                <option value="all">
-                  All Statuses
-                </option>
+                <tbody>
+                  {filteredItems.map((item) => (
+                    <tr key={item.id}>
+                      <td className="col-cat">
+                        <span className="cat-pill-badge">
+                          {item.category_name}
+                        </span>
+                      </td>
 
-                <option value="active">Active</option>
-                <option value="inactive">
-                  Inactive
-                </option>
-              </select>
+                      <td className="col-content">
+                        <div className="col-question">
+                          {item.question}
+                        </div>
+
+                        <div className="col-answer-snippet">
+                          {item.answer}
+                        </div>
+                      </td>
+
+                      <td className="col-source">
+                        {item.source || '—'}
+                      </td>
+
+                      <td className="col-status">
+                        <span
+                          className={`status-pill ${
+                            item.status === 'active'
+                              ? 'badge-live'
+                              : 'badge-disabled'
+                          }`}
+                        >
+                          {item.status}
+                        </span>
+                      </td>
+
+                      <td className="col-date">
+                        {new Date(
+                          item.updated_at
+                        ).toLocaleDateString()}
+                      </td>
+
+                      <td className="col-actions">
+                        <button
+                          className="btn-table-edit"
+                          onClick={() =>
+                            openEditModal(item)
+                          }
+                        >
+                          Edit
+                        </button>
+
+                        <button
+                          className="btn-table-delete"
+                          onClick={() =>
+                            handleDelete(
+                              item.id,
+                              item.question
+                            )
+                          }
+                        >
+                          Delete
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
-          </div>
-
-          <div className="table-count-tag">
-            {filteredItems.length} records displayed
-          </div>
-        </div>
-
-        <div className="admin-table-frame">
-          <table className="admin-grid-table">
-            <thead>
-              <tr>
-                <th>Category</th>
-                <th>Inquiry &amp; Content</th>
-                <th>Source</th>
-                <th>Status</th>
-                <th>Modified</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-
-            <tbody>
-              {filteredItems.map((item) => (
-                <tr key={item.id}>
-                  <td>
-                    <span className="tag-category-pill">
-                      {item.category_name}
-                    </span>
-                  </td>
-
-                  <td className="col-question-content">
-                    <strong className="entry-q-title">
-                      {item.question}
-                    </strong>
-
-                    <p className="entry-q-preview">
-                      {item.answer.slice(0, 110)}...
-                    </p>
-                  </td>
-
-                  <td className="col-source">
-                    {item.source || '—'}
-                  </td>
-
-                  <td>
-                    <span
-                      className={`status-badge ${
-                        item.status === 'active'
-                          ? 'badge-live'
-                          : 'badge-disabled'
-                      }`}
-                    >
-                      {item.status}
-                    </span>
-                  </td>
-
-                  <td className="col-date">
-                    {new Date(
-                      item.updated_at
-                    ).toLocaleDateString()}
-                  </td>
-
-                  <td className="col-actions">
-                    <button
-                      className="btn-table-edit"
-                      onClick={() =>
-                        openEditModal(item)
-                      }
-                    >
-                      Edit
-                    </button>
-
-                    <button
-                      className="btn-table-delete"
-                      onClick={() =>
-                        handleDelete(
-                          item.id,
-                          item.question
-                        )
-                      }
-                    >
-                      Delete
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+          </>
+        )}
 
         {showModal && (
           <div
