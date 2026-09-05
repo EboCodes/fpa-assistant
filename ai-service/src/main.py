@@ -89,6 +89,7 @@ def process_message():
             'processed_message': processed,
             'intent': intent['name'],
             'confidence': intent['confidence'],
+            'category_id': intent.get('category_id'),
             'response': response_text,
             'sources': sources,
             'response_mode': response_mode,
