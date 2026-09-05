@@ -1111,55 +1111,71 @@ function Chat({ user }) {
   return (
     <div className="desk-viewport">
       {user && (
-        <aside
-          className={`desk-sidebar ${
-            showHistory ? 'sidebar-open' : ''
-          }`}
-        >
-          <div className="desk-sidebar-header">
-            <h3>Saved Sessions</h3>
+        <>
+          {showHistory && (
+            <div
+              className="sidebar-backdrop"
+              onClick={() => setShowHistory(false)}
+              aria-hidden="true"
+            />
+          )}
 
-            <button
-              className="btn-new-topic"
-              onClick={startNewTopic}
-            >
-              <Icons.Plus /> New
-            </button>
-          </div>
+          <aside
+            className={`desk-sidebar ${
+              showHistory ? 'sidebar-open' : ''
+            }`}
+          >
+            <div className="desk-sidebar-header">
+              <h3>Saved Sessions</h3>
 
-          <div className="desk-sidebar-content">
-            {conversations.length === 0 ? (
-              <p className="sidebar-empty-msg">
-                No saved sessions.
-              </p>
-            ) : (
-              conversations.map((c) => (
-                <div
-                  key={c.id}
-                  className={`session-item ${
-                    c.id === conversationId
-                      ? 'session-item-selected'
-                      : ''
-                  }`}
-                  onClick={() => loadConversation(c.id)}
-                >
-                  <span className="session-title">
-                    {c.title || 'Session'}
-                  </span>
+              <button
+                className="btn-new-topic"
+                onClick={() => {
+                  startNewTopic();
+                  if (window.innerWidth <= 768) setShowHistory(false);
+                }}
+              >
+                <Icons.Plus /> New
+              </button>
+            </div>
 
-                  <span className="session-date">
-                    {new Date(
-                      c.updated_at
-                    ).toLocaleDateString([], {
-                      month: 'short',
-                      day: 'numeric',
-                    })}
-                  </span>
-                </div>
-              ))
-            )}
-          </div>
-        </aside>
+            <div className="desk-sidebar-content">
+              {conversations.length === 0 ? (
+                <p className="sidebar-empty-msg">
+                  No saved sessions.
+                </p>
+              ) : (
+                conversations.map((c) => (
+                  <div
+                    key={c.id}
+                    className={`session-item ${
+                      c.id === conversationId
+                        ? 'session-item-selected'
+                        : ''
+                    }`}
+                    onClick={() => {
+                      loadConversation(c.id);
+                      if (window.innerWidth <= 768) setShowHistory(false);
+                    }}
+                  >
+                    <span className="session-title">
+                      {c.title || 'Session'}
+                    </span>
+
+                    <span className="session-date">
+                      {new Date(
+                        c.updated_at
+                      ).toLocaleDateString([], {
+                        month: 'short',
+                        day: 'numeric',
+                      })}
+                    </span>
+                  </div>
+                ))
+              )}
+            </div>
+          </aside>
+        </>
       )}
 
       <section className="desk-workspace">
