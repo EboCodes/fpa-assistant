@@ -150,22 +150,21 @@ a {
 }
 
 .brand-crest-box {
-  width: 40px;
-  height: 40px;
+  width: 42px;
+  height: 42px;
   background: var(--inst-green);
   border: 1px solid rgba(255, 255, 255, 0.25);
   border-radius: var(--radius-sm);
   display: flex;
   align-items: center;
   justify-content: center;
+  overflow: hidden;
 }
 
-.crest-letters {
-  font-family: 'Outfit', sans-serif;
-  font-weight: 800;
-  font-size: 0.95rem;
-  letter-spacing: 0.05em;
-  color: #ffffff;
+.site-logo-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 
 .brand-meta {
@@ -706,6 +705,14 @@ a {
   margin-bottom: 16px;
 }
 
+.auth-logo-img {
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius-sm);
+  object-fit: cover;
+  border: 1px solid rgba(0, 77, 46, 0.2);
+}
+
 .crest-small {
   background: var(--inst-green);
   color: #ffffff;
@@ -1062,6 +1069,26 @@ a {
   margin: 0 auto 16px;
 }
 
+.slate-emblem-wrap {
+  width: 84px;
+  height: 84px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, rgba(0,77,46,0.1), rgba(212,175,55,0.15));
+  padding: 4px;
+  margin: 0 auto 16px;
+  box-shadow: 0 4px 14px rgba(0, 77, 46, 0.15);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.slate-mascot-img {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
 .desk-empty-slate h3 {
   font-size: 1.5rem;
   font-weight: 800;
@@ -1149,6 +1176,14 @@ a {
   display: inline-flex;
   align-items: center;
   gap: 6px;
+}
+
+.message-mascot-avatar {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 1.5px solid var(--inst-green);
 }
 
 .badge-crest {

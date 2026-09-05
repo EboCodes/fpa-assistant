@@ -410,7 +410,7 @@ function Header({ user, onLogout }) {
       <div className="site-header-inner">
         <Link to="/" className="site-brand">
           <div className="brand-crest-box">
-            <span className="crest-letters">FPA</span>
+            <img src="/logo.jpg" alt="FPA AI Assistant Logo" className="site-logo-img" />
           </div>
 
           <div className="brand-meta">
@@ -730,7 +730,7 @@ function Login({ setUser }) {
     <main className="auth-canvas">
       <div className="auth-box">
         <div className="auth-header-strip">
-          <span className="crest-small">FPA</span>
+          <img src="/logo.jpg" alt="FPA AI Assistant Logo" className="auth-logo-img" />
           <span>The Federal Polytechnic, Ado-Ekiti</span>
         </div>
 
@@ -1218,7 +1218,9 @@ function Chat({ user }) {
         <div className="desk-thread">
           {messages.length === 0 ? (
             <div className="desk-empty-slate">
-              <div className="slate-emblem">FPA</div>
+              <div className="slate-emblem-wrap">
+                <img src="/mascot.jpg" alt="FPA Assistant Mascot" className="slate-mascot-img" />
+              </div>
 
               <h3>
                 How can the institution assist you today?
@@ -1264,7 +1266,7 @@ function Chat({ user }) {
                     <span>Student</span>
                   ) : (
                     <div className="speaker-badge-helpdesk">
-                      <span className="badge-crest">FPA</span>
+                      <img src="/mascot.jpg" alt="FPA Mascot" className="message-mascot-avatar" />
                       <span>FPA Assistant</span>
                       {m.responseMode === 'web_assisted' ? (
                         <span className="mode-pill mode-web" title="Includes Google Search Grounding references">
