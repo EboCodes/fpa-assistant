@@ -77,8 +77,98 @@ const admin = [
 app.get("/health", (req, res) =>
   res.json({ status: "API is running", timestamp: new Date() }),
 );
+const ensureDatabaseSchema = async () => {
+  try {
+    await db.none(`
+      CREATE TABLE IF NOT EXISTS users (
+        id SERIAL PRIMARY KEY,
+        name VARCHAR(255) NOT NULL,
+        email VARCHAR(255) UNIQUE NOT NULL,
+        password VARCHAR(255) NOT NULL,
+        role VARCHAR(50) DEFAULT 'student',
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      );
+
+      CREATE TABLE IF NOT EXISTS categories (
+        id SERIAL PRIMARY KEY,
+        name VARCHAR(100) NOT NULL UNIQUE,
+        description TEXT,
+        icon VARCHAR(255),
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      );
+
+      CREATE TABLE IF NOT EXISTS knowledge_base (
+        id SERIAL PRIMARY KEY,
+        category_id INT NOT NULL,
+        question TEXT NOT NULL UNIQUE,
+        answer TEXT NOT NULL,
+        keywords VARCHAR(255),
+        source VARCHAR(255),
+        status VARCHAR(50) DEFAULT 'active',
+        created_by INT,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (category_id) REFERENCES categories(id) ON DELETE CASCADE,
+        FOREIGN KEY (created_by) REFERENCES users(id)
+      );
+
+      CREATE TABLE IF NOT EXISTS conversations (
+        id SERIAL PRIMARY KEY,
+        user_id INT,
+        title VARCHAR(255),
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+      );
+
+      CREATE TABLE IF NOT EXISTS chat_messages (
+        id SERIAL PRIMARY KEY,
+        conversation_id INT NOT NULL,
+        user_message TEXT NOT NULL,
+        ai_response TEXT NOT NULL,
+        intent VARCHAR(100),
+        confidence_score FLOAT,
+        kb_used INT,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (conversation_id) REFERENCES conversations(id) ON DELETE CASCADE,
+        FOREIGN KEY (kb_used) REFERENCES knowledge_base(id)
+      );
+
+      CREATE TABLE IF NOT EXISTS feedback (
+        id SERIAL PRIMARY KEY,
+        message_id INT NOT NULL,
+        user_id INT,
+        rating INT CHECK (rating >= 1 AND rating <= 5),
+        feedback_text TEXT,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (message_id) REFERENCES chat_messages(id) ON DELETE CASCADE,
+        FOREIGN KEY (user_id) REFERENCES users(id)
+      );
+
+      CREATE TABLE IF NOT EXISTS knowledge_candidates (
+        id SERIAL PRIMARY KEY,
+        category_id INT,
+        question TEXT NOT NULL,
+        answer TEXT NOT NULL,
+        source VARCHAR(255),
+        source_url TEXT,
+        confidence FLOAT DEFAULT 0.85,
+        status VARCHAR(50) DEFAULT 'pending',
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        reviewed_at TIMESTAMP,
+        reviewed_by INT REFERENCES users(id),
+        FOREIGN KEY (category_id) REFERENCES categories(id) ON DELETE SET NULL
+      );
+    `);
+  } catch (err) {
+    console.error("[DB] Warning: Database schema verification:", err.message);
+  }
+};
+
 const ensureDefaultAdmin = async () => {
   try {
+    await ensureDatabaseSchema();
     const adminEmail = (process.env.ADMIN_EMAIL || "joshua@ajala.com").trim().toLowerCase();
     const adminPassword = process.env.ADMIN_PASSWORD || "Admin123!";
     const adminName = "Institutional Administrator";

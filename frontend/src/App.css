@@ -2051,6 +2051,16 @@ a {
   gap: 14px;
 }
 
+.modal-alert-error {
+  padding: 10px 14px;
+  background: #fef2f2;
+  border: 1px solid #fca5a5;
+  border-radius: var(--radius-sm);
+  color: #991b1b;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
 .sidebar-backdrop {
   position: fixed;
   inset: 0;

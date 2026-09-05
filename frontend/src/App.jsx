@@ -1626,21 +1626,27 @@ function Admin({ user }) {
 
     try {
       const [kbRes, catRes, statRes, candRes] =
-        await Promise.all([
+        await Promise.allSettled([
           api.get('/api/admin/kb'),
           api.get('/api/categories'),
           api.get('/api/admin/analytics'),
           api.get('/api/admin/candidates'),
         ]);
 
-      setItems(kbRes.data.data || []);
-      setCategories(catRes.data.categories || []);
-      setAnalytics(
-        statRes.data.analytics || null
-      );
-      setCandidates(candRes.data.data || []);
-    } catch {
-      // Error
+      if (kbRes.status === 'fulfilled') {
+        setItems(kbRes.value.data.data || []);
+      }
+      if (catRes.status === 'fulfilled') {
+        setCategories(catRes.value.data.categories || []);
+      }
+      if (statRes.status === 'fulfilled') {
+        setAnalytics(statRes.value.data.analytics || null);
+      }
+      if (candRes.status === 'fulfilled') {
+        setCandidates(candRes.value.data.data || []);
+      }
+    } catch (err) {
+      console.error('Failed to load admin data:', err);
     } finally {
       setLoading(false);
     }
@@ -1649,18 +1655,18 @@ function Admin({ user }) {
   const handleApproveCandidate = async (id) => {
     try {
       await api.post(`/api/admin/candidates/${id}/approve`);
-      loadData();
-    } catch {
-      alert('Failed to approve candidate to Knowledge Base.');
+      await loadData();
+    } catch (err) {
+      alert(err.response?.data?.error || 'Failed to approve candidate to Knowledge Base.');
     }
   };
 
   const handleRejectCandidate = async (id) => {
     try {
       await api.post(`/api/admin/candidates/${id}/reject`);
-      loadData();
-    } catch {
-      alert('Failed to reject candidate.');
+      await loadData();
+    } catch (err) {
+      alert(err.response?.data?.error || 'Failed to reject candidate.');
     }
   };
 
@@ -1690,9 +1696,9 @@ function Admin({ user }) {
     setEditingItem(item);
 
     setForm({
-      categoryId: item.category_id,
-      question: item.question,
-      answer: item.answer,
+      categoryId: item.category_id || (categories[0]?.id || 1),
+      question: item.question || '',
+      answer: item.answer || '',
       keywords: item.keywords || '',
       source: item.source || '',
       status: item.status || 'active',
@@ -1709,21 +1715,26 @@ function Admin({ user }) {
     setSaving(true);
 
     try {
+      const payload = {
+        ...form,
+        categoryId: parseInt(form.categoryId, 10) || 1,
+      };
+
       if (editingItem) {
         await api.put(
           `/api/admin/kb/${editingItem.id}`,
-          form
+          payload
         );
       } else {
-        await api.post('/api/admin/kb', form);
+        await api.post('/api/admin/kb', payload);
       }
 
       setShowModal(false);
-      loadData();
+      await loadData();
     } catch (err) {
       setFormError(
         err.response?.data?.error ||
-          'Failed to update knowledge record.'
+          'Failed to update knowledge record. Please verify inputs and try again.'
       );
     } finally {
       setSaving(false);
@@ -1738,9 +1749,10 @@ function Admin({ user }) {
     ) {
       try {
         await api.delete(`/api/admin/kb/${id}`);
-        loadData();
-      } catch {
-        alert('Failed to delete entry');
+        setItems((prev) => prev.filter((i) => i.id !== id));
+        await loadData();
+      } catch (err) {
+        alert(err.response?.data?.error || 'Failed to delete entry');
       }
     }
   };
