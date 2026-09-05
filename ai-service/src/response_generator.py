@@ -35,11 +35,11 @@ class ResponseGenerator:
 
         # Gemini model fallback order
         self.gemini_models = [
-            "models/gemini-2.5-flash",
+            "models/gemini-3.5-flash-lite",
+            "models/gemini-3.1-flash-lite",
             "models/gemini-3.7-flash",
+            "models/gemini-3.8-flash",
             "models/gemini-3.6-flash",
-            "models/gemini-flash-latest",
-            "models/gemini-flash-lite-latest",
         ]
 
         logger.info(
@@ -737,7 +737,7 @@ points before finishing.
                 model_name = f"models/{model_name}"
 
             # If grounding requested, try with grounding first, then without tools on error
-            tool_modes = ["google_search_retrieval"] if enable_grounding else [None]
+            tool_modes = ["google_search_retrieval", None] if enable_grounding else [None]
 
             for tool_opt in tool_modes:
                 try:

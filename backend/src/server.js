@@ -160,6 +160,10 @@ const ensureDatabaseSchema = async () => {
         reviewed_by INT REFERENCES users(id),
         FOREIGN KEY (category_id) REFERENCES categories(id) ON DELETE SET NULL
       );
+
+      DELETE FROM knowledge_candidates
+      WHERE answer LIKE '%could not find a verified answer%'
+         OR answer LIKE '%I do not have verified information%';
     `);
   } catch (err) {
     console.error("[DB] Warning: Database schema verification:", err.message);
@@ -364,7 +368,14 @@ app.post(
         [c.id],
       );
     }
-    if (p.response_mode === "web_assisted" && response.length > 20) {
+    const isFallback =
+      response.includes("could not find a verified answer") ||
+      response.includes("I do not have verified information");
+    if (
+      p.response_mode === "web_assisted" &&
+      response.length > 20 &&
+      !isFallback
+    ) {
       const topSource = (p.sources && p.sources[0]) || {};
       await db
         .none(
