@@ -2056,6 +2056,11 @@ a {
    ========================================================= */
 
 @media (max-width: 1024px) {
+  .services-bar-inner {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+  }
+
   .directory-grid, .repo-cards-grid {
     grid-template-columns: repeat(2, 1fr);
   }
@@ -2066,6 +2071,64 @@ a {
 
   .admin-stats-grid {
     grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (max-width: 868px) {
+  .split-hero-layout {
+    flex-direction: column-reverse;
+    text-align: center;
+    gap: 28px;
+    padding-bottom: 28px;
+    margin-bottom: 28px;
+  }
+
+  .hero-left-column {
+    flex: 1;
+    max-width: 100%;
+    width: 100%;
+  }
+
+  .hero-right-column {
+    flex: 1;
+    width: 100%;
+    justify-content: center;
+  }
+
+  .institution-flag {
+    justify-content: center;
+  }
+
+  .hero-title {
+    font-size: 2rem;
+    line-height: 1.25;
+    margin-bottom: 12px;
+  }
+
+  .hero-subtitle {
+    margin: 0 auto 20px;
+    font-size: 0.96rem;
+  }
+
+  .hero-cta-group {
+    justify-content: center;
+  }
+
+  .starter-chips-strip {
+    justify-content: center;
+  }
+
+  .mascot-wrapper {
+    max-width: 280px;
+  }
+
+  .mascot-backdrop-shape {
+    width: 240px;
+    height: 240px;
+  }
+
+  .mascot-img {
+    max-width: 260px;
   }
 }
 
@@ -2139,6 +2202,58 @@ a {
 
   .form-two-col {
     grid-template-columns: 1fr;
+  }
+
+  .services-bar-inner {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+  }
+}
+
+@media (max-width: 540px) {
+  .landing-layout {
+    width: 92%;
+    padding: 24px 0 40px;
+  }
+
+  .hero-title {
+    font-size: 1.65rem;
+  }
+
+  .hero-subtitle {
+    font-size: 0.9rem;
+  }
+
+  .hero-cta-group {
+    flex-direction: column;
+    width: 100%;
+    gap: 10px;
+  }
+
+  .btn-primary-hero, .btn-secondary-hero {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .mascot-wrapper {
+    max-width: 220px;
+  }
+
+  .mascot-backdrop-shape {
+    width: 190px;
+    height: 190px;
+  }
+
+  .mascot-img {
+    max-width: 200px;
+  }
+
+  .services-bar-inner {
+    grid-template-columns: 1fr;
+  }
+
+  .bottom-services-bar {
+    padding: 16px 14px;
   }
 }
 
