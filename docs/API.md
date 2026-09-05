@@ -294,6 +294,41 @@ Updates an existing knowledge base record.
 Deletes an existing knowledge base record.
 - **Response (200 OK)**: `{ "success": true, "message": "Knowledge base entry deleted successfully" }`
 
+#### `GET /api/admin/candidates`
+Returns queued web discovery candidates sorted with pending items first.
+- **Response (200 OK)**:
+```json
+{
+  "data": [
+    {
+      "id": 1,
+      "category_id": 1,
+      "category_name": "Admission",
+      "question": "Where is the main campus of Federal Polytechnic Ado Ekiti located?",
+      "answer": "The main campus of The Federal Polytechnic, Ado-Ekiti is located along the Ado-Ijan Ekiti road...",
+      "source": "Web Search Discovery",
+      "source_url": "https://fedpolyado.edu.ng",
+      "confidence": 0.85,
+      "status": "pending",
+      "created_at": "2026-09-05T14:26:00.000Z"
+    }
+  ]
+}
+```
+
+#### `POST /api/admin/candidates/:id/approve`
+Approves a pending discovery, converting it into a verified active entry in `knowledge_base`.
+- **Response (200 OK)**: `{ "success": true, "kbEntry": { ... } }`
+
+#### `POST /api/admin/candidates/:id/reject`
+Rejects a pending discovery, changing its status to `rejected`.
+- **Response (200 OK)**: `{ "success": true, "candidate": { ... } }`
+
+#### `PUT /api/admin/candidates/:id`
+Edits a candidate's text, category, or source before approval.
+- **Request Body**: `{ question, answer, categoryId, source, sourceUrl }`
+- **Response (200 OK)**: `{ "success": true, "candidate": { ... } }`
+
 ---
 
 ## 🤖 Python AI Microservice (Port 5001)

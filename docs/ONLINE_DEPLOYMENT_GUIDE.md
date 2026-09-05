@@ -5,21 +5,30 @@ This guide provides step-by-step instructions to deploy **FPA Assistant** live o
 
 ---
 
+## 🌐 Current Production Deployment
+
+| Service | Host | Live Production URL |
+| :--- | :--- | :--- |
+| **Frontend Web App** | Vercel SPA | [https://fpa-edu-assistant.vercel.app](https://fpa-edu-assistant.vercel.app) |
+| **Admin Dashboard** | Vercel SPA | [https://fpa-edu-assistant.vercel.app/admin](https://fpa-edu-assistant.vercel.app/admin) |
+| **Backend REST API** | Render Web Service | [https://fpa-backend-s09g.onrender.com](https://fpa-backend-s09g.onrender.com) |
+| **AI Microservice** | Render Web Service | [https://fpa-ai-service.onrender.com](https://fpa-ai-service.onrender.com) |
+
+---
+
 ## Architecture Overview
 
 ```text
-[ Students & Staff ] 
-         │ (HTTPS / 443)
-         ▼
-    [ Nginx / Cloud PaaS ]
-         │
-         ├──► [ Frontend + Backend API ] (Node.js on :5000)
-         │           │
-         │           ├──► [ PostgreSQL Database ] (:5432)
-         │           │
-         │           └──► [ Python AI Microservice ] (:5001)
-         │                       │
-         │                       └──► [ Google Gemini API ]
+[ Vercel Frontend SPA ]
+          │ (HTTPS / REST)
+          ▼
+    [ Render Node.js Backend API ]
+          │
+          ├──► [ Render PostgreSQL Database (Auto Schema Verification) ]
+          │
+          └──► [ Render Python AI Microservice ]
+                      │
+                      └──► [ Google Gemini API (Grounding & LLM Cascade) ]
 ```
 
 - **Unified Web & API App**: Port 5000 (Node.js Express serves the built React SPA and `/api/*` endpoints).

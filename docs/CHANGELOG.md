@@ -5,6 +5,22 @@ All notable updates, architectural changes, and bug fixes for FPA Assistant are 
 
 ---
 
+## [2.0.0] - 2026-09-05
+
+### Added
+- **Gemini Web Discovery Queue (`knowledge_candidates`)**: Self-expanding AI feature that captures un-indexed student inquiries, executes live web search grounding, and queues the discovered Q&A pair into the Admin Panel for one-click approval into the permanent Knowledge Base.
+- **Auto-Ensured Database Schema (`ensureDatabaseSchema`)**: Automatic backend table verification on boot, creating missing tables (`knowledge_candidates`, `feedback`, `chat_messages`, `conversations`, `knowledge_base`, `categories`, `users`) dynamically on server start.
+- **Fault-Tolerant Admin Data Loading**: Updated Admin portal state loading to use `Promise.allSettled` and added styled modal error boxes (`.modal-alert-error`) for clean validation feedback.
+- **Vercel SPA Deployment & API Fallback**: Created `frontend/vercel.json` SPA rewrite rules and fallback Render API URL configuration in `App.jsx`.
+- **Institutional Defense & Presentation Guide**: Created downloadable PDF (`project_defense_guide.pdf`) and Markdown guide for non-technical stakeholders and project presentation.
+
+### Changed
+- **Gemini Model Cascade Update**: Switched model fallback order to active high-capacity models (`models/gemini-3.5-flash-lite`, `models/gemini-3.1-flash-lite`, `models/gemini-3.7-flash`, `models/gemini-3.8-flash`).
+- **Un-tooled Generative Fallback**: Added direct generative fallback if web search tools hit quota limits, ensuring Gemini always generates rich, accurate answers.
+- **Candidate Queue Filter**: Added backend condition in `server.js` to ensure fallback template messages are never queued into Pending Discoveries.
+
+---
+
 ## [1.5.0] - 2026-09-02
 
 ### Added

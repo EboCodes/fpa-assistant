@@ -48,8 +48,18 @@ The repository includes two SQL seeding scripts:
 1. `database/schema/knowledge_base_seed.sql`: Initial 24 institutional Q&A entries.
 2. `database/schema/knowledge_base_expanded_seed.sql`: 27 comprehensive expanded records covering administrative procedures, leadership, and student services.
 
-To re-seed or update:
 ```bash
 PGPASSWORD=ayoade2004 psql -h localhost -U postgres -d educational_assistant -f database/schema/knowledge_base_seed.sql
 PGPASSWORD=ayoade2004 psql -h localhost -U postgres -d educational_assistant -f database/schema/knowledge_base_expanded_seed.sql
 ```
+
+---
+
+## 🚀 4. Pending Discoveries Queue (`knowledge_candidates`)
+
+To ensure the knowledge repository automatically evolves without manual data entry for new student questions:
+
+1. **Automatic Capture**: When a student asks an inquiry that does not exist in the 55 verified records, Gemini uses Google Search Grounding to fetch the answer and cite source URLs.
+2. **Pending Discoveries Card**: The backend stores the discovered Q&A pair in `knowledge_candidates` table with `status = 'pending'`.
+3. **One-Click Approval**: In the Admin Portal under the **Pending Discoveries Queue** tab, the administrator can review the discovered answer and click **`Approve to Verified KB`**.
+4. **Promotion to KB**: Approving a discovery automatically creates a permanent active entry in `knowledge_base` and marks the candidate status as `approved`. Future queries on that topic hit the verified database directly.

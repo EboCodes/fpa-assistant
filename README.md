@@ -6,66 +6,78 @@ FPA Assistant is an enterprise-grade conversational AI platform specifically eng
 
 ---
 
+## 🌐 Live Production URLs
+
+| Component | Production URL | Description |
+| :--- | :--- | :--- |
+| **Web Application** | [https://fpa-edu-assistant.vercel.app](https://fpa-edu-assistant.vercel.app) | Live Vercel Frontend SPA |
+| **Admin Portal** | [https://fpa-edu-assistant.vercel.app/admin](https://fpa-edu-assistant.vercel.app/admin) | Institutional Management Dashboard |
+| **Backend API** | [https://fpa-backend-s09g.onrender.com](https://fpa-backend-s09g.onrender.com) | Express API on Render |
+| **AI Microservice** | [https://fpa-ai-service.onrender.com](https://fpa-ai-service.onrender.com) | Python Flask & Gemini NLP Microservice |
+
+### 🔑 Default Administrator Credentials
+- **Email**: `joshua@ajala.com`
+- **Password**: `Admin123!`
+
+---
+
 ## 🎯 System Highlights
 
 - **Institutional Knowledge Base**: Over **55 verified data records** sourced directly from `fedpolyado.edu.ng` across 11 key service categories.
-- **Conversational Intelligence**: Powered by Google Gemini (`models/gemini-flash-lite-latest` and `models/gemini-3.7-flash`) with sub-second response times, natural conversational greeting detection, and strict question-focused answers (zero data dumping).
-- **Human-Crafted Institutional UI**: Dignified Federal Polytechnic forest green (`#004D2E`) design system, completely free of AI slop, cartoon emojis, or generic marketing buzzwords.
-- **Private Knowledge Base**: The knowledge base is strictly reserved for administrative management in the Admin Panel and hidden from the public interface.
+- **Self-Learning Web Discovery Queue (`knowledge_candidates`)**: When students ask un-indexed inquiries, Gemini performs live web search grounding to answer the student accurately. Concurrently, the backend queues the discovered Q&A pair into the **Pending Discoveries Queue** for one-click admin approval.
+- **Conversational Intelligence**: Powered by an active Google Gemini Model Cascade (`models/gemini-3.5-flash-lite`, `models/gemini-3.1-flash-lite`, `models/gemini-3.7-flash`, `models/gemini-3.8-flash`) with un-tooled generative fallback and sub-second response times.
+- **Complete Admin Management**: Real-time institutional analytics, category filtering, and fault-tolerant Create, Read, Update, and Delete (CRUD) operations backed by `Promise.allSettled`.
+- **Auto-Ensured Database Schema**: Backend server automatically verifies and creates PostgreSQL tables on startup (`ensureDatabaseSchema`), keeping production databases fully synchronized.
 - **Student Accounts & Chat History**: Secure user registration, persistent multi-turn conversation memory, and message-level feedback rating (`/api/chat/feedback`).
-- **Complete Admin Portal**: Real-time analytics, category filtering, and full Create, Read, Update, and Delete (CRUD) operations on institutional records.
+- **Institutional UI**: Official Federal Polytechnic forest green (`#004D2E`) design system, responsive across mobile and desktop devices.
 
 ---
 
 ## 🏗️ Architecture & Technology Stack
 
 ```text
-[ Web Browser (Desktop / Mobile) ]
-                │
-                ▼ (Port 5000)
+[ Vercel Web Client (Desktop / Mobile) ]
+                 │
+                 ▼ (HTTPS / REST)
 ┌─────────────────────────────────────────────────────────────┐
-│ Node.js Express Server                                      │
-│ - Serves Compiled Production React SPA (frontend/dist)      │
+│ Node.js Express Server (Render PaaS)                        │
 │ - REST API Authentication (JWT)                             │
 │ - Conversation Persistence & Feedback Storage               │
-│ - Admin Endpoints & Analytics                               │
+│ - Admin Endpoints, Analytics & Schema Auto-Verification     │
 └──────────────┬──────────────────────────────┬───────────────┘
                │                              │
-               ▼ (:5432)                      ▼ (:5001)
+               ▼                              ▼ 
 ┌─────────────────────────────┐┌──────────────────────────────┐
-│ PostgreSQL 14+ Database     ││ Python 3.11 AI Microservice  │
-│ - 9 Normalized Tables       ││ - Flask + Gunicorn WSGI      │
+│ PostgreSQL Managed Database ││ Python 3.11 AI Microservice  │
+│ - 10 Normalized Tables      ││ - Flask + Gunicorn WSGI      │
 │ - 11 Service Categories     ││ - spaCy NLP & NLTK           │
-│ - 55 Verified KB Records    ││ - Multi-Model Gemini Cascade │
+│ - 55 Verified KB Records    ││ - Gemini Model Cascade       │
+│ - Pending Candidates Queue  ││ - Web Search Grounding       │
 └─────────────────────────────┘└──────────────┬───────────────┘
                                               │
                                               ▼ (HTTPS / API)
                                ┌──────────────────────────────┐
                                │ Google Gemini API            │
-                               │ (gemini-flash-lite-latest)   │
+                               │ (gemini-3.5-flash-lite)      │
                                └──────────────────────────────┘
 ```
 
-- **Frontend**: React 18, Vite 5, React Router v6, custom responsive SVG design system.
-- **Backend**: Node.js 20+, Express, pg-promise, bcryptjs, jsonwebtoken, helmet, cors.
-- **AI Microservice**: Python 3.11, Flask, Gunicorn 21.2, Google Generative AI SDK, spaCy (`en_core_web_sm`), NLTK.
-- **Database**: PostgreSQL 14+ on port 5432 (`educational_assistant`).
+- **Frontend**: React 18, Vite 5, React Router v6, custom responsive SVG design system (deployed on Vercel).
+- **Backend**: Node.js 20+, Express, pg-promise, bcryptjs, jsonwebtoken, helmet, cors (deployed on Render).
+- **AI Microservice**: Python 3.11, Flask, Gunicorn 21.2, Google Generative AI SDK, spaCy (`en_core_web_sm`), NLTK (deployed on Render).
+- **Database**: PostgreSQL 14+ (`educational_assistant`).
 
 ---
 
-## 🚀 Quick Start & Management
+## 🚀 Quick Start & Local Management
 
-The repository includes unified lifecycle management scripts at the root directory:
-
-### 1. Start All Services
+### 1. Start All Services Locally
 ```bash
 ./start-services.sh
 ```
-*Checks PostgreSQL, compiles frontend assets if missing, launches Gunicorn AI microservice (:5001) and Node.js backend (:5000), and validates live endpoints.*
+*Launches Gunicorn AI microservice (:5001) and Node.js backend (:5000), checking PostgreSQL and building frontend assets if missing.*
 
-*(Optional: Add `--dev` to launch the Vite hot-reload development server on port 5173).*
-
-### 2. Check System Health & Metrics
+### 2. Check System Metrics
 ```bash
 ./status-services.sh
 ```
@@ -77,37 +89,21 @@ The repository includes unified lifecycle management scripts at the root directo
 
 ---
 
-## 🌐 Live URLs & Access
-
-| Resource | URL | Details |
-| :--- | :--- | :--- |
-| **Web Application** | [http://localhost:5000/](http://localhost:5000/) | Production Single Page Application |
-| **REST API Base** | [http://localhost:5000/api](http://localhost:5000/api) | Express API |
-| **Admin Portal** | [http://localhost:5000/admin](http://localhost:5000/admin) | Administrative Dashboard |
-| **AI Microservice** | [http://localhost:5001/health](http://localhost:5001/health) | Flask / Gunicorn healthcheck |
-
-### 🔑 Administrator Credentials
-- **Email**: `joshua@ajala.com`
-- **Password**: `Admin123!`
-
----
-
 ## 📁 Repository Directory Structure
 
 ```text
 Ajala/
 ├── frontend/                     # React Single-Page Application
 │   ├── src/
-│   │   ├── App.jsx              # Main UI routing, components, and views
+│   │   ├── App.jsx              # Routing, components, and views
 │   │   ├── App.css              # Official institutional design system
-│   │   └── main.jsx             # React entry point
-│   ├── dist/                    # Compiled production bundle
+│   │   └── responseFormatting.jsx # Markdown parser
+│   ├── vercel.json              # Vercel SPA rewrite rules
 │   └── package.json
 │
 ├── backend/                      # Node.js + Express REST API
 │   ├── src/
-│   │   ├── server.js            # Express routes, controllers, and static server
-│   │   ├── seed_admin.js        # Administrator creation/promotion utility
+│   │   ├── server.js            # Express routes & schema auto-verification
 │   │   └── e2e_verification.js  # 14-point automated test suite
 │   ├── .env                     # Database and JWT configuration
 │   └── package.json
@@ -115,34 +111,27 @@ Ajala/
 ├── ai-service/                   # Python 3.11 NLP & LLM Microservice
 │   ├── src/
 │   │   ├── main.py              # Flask microservice entry point
-│   │   ├── response_generator.py# Conversational cascade & intelligence engine
+│   │   ├── response_generator.py# Conversational cascade & grounding engine
 │   │   ├── nlp_processor.py     # spaCy text processing
 │   │   └── intent_recognizer.py # Query categorization
 │   ├── venv/                    # Dedicated Python 3.11 virtual environment
-│   ├── .env                     # Gemini API credentials and model configuration
 │   └── requirements.txt
 │
 ├── database/                     # PostgreSQL Database Schemas & Seeds
 │   └── schema/
-│       ├── initial_schema.sql   # DDL for 9 core tables
-│       ├── knowledge_base_seed.sql # Initial 24 Q&A records
-│       └── knowledge_base_expanded_seed.sql # 27 comprehensive records from fedpolyado.edu.ng
+│       ├── initial_schema.sql   # Core table schema
+│       └── knowledge_candidates.sql # Pending discoveries queue schema
 │
 ├── docs/                         # Detailed Documentation
 │   ├── API.md                   # Complete REST API specification
-│   ├── ARCHITECTURE.md          # In-depth technical architecture
-│   ├── KNOWLEDGE_BASE.md        # Knowledge base taxonomy & management
-│   ├── ONLINE_DEPLOYMENT_GUIDE.md # Cloud & VPS shipping instructions
-│   ├── SETUP.md                 # Developer installation guide
-│   ├── IMPLEMENTATION_SUMMARY.md# Full feature implementation review
-│   ├── SYSTEM_VERIFICATION_REPORT.md # Verification records
-│   └── CHANGELOG.md             # Detailed release history
+│   ├── ARCHITECTURE.md          # Technical architecture
+│   ├── KNOWLEDGE_BASE.md        # Knowledge base & discovery queue
+│   ├── ONLINE_DEPLOYMENT_GUIDE.md # Vercel & Render cloud shipping
+│   ├── SETUP.md                 # Developer setup guide
+│   ├── IMPLEMENTATION_SUMMARY.md# Full feature implementation summary
+│   ├── SYSTEM_VERIFICATION_REPORT.md # Verification logs
+│   └── CHANGELOG.md             # Release history
 │
-├── logs/                         # Background runtime logs
-├── start-services.sh             # Production service launcher
-├── stop-services.sh              # Service shutdown utility
-├── status-services.sh            # Live health and metric inspector
-├── docker-compose.yml           # Containerized orchestration
 └── README.md
 ```
 
@@ -150,9 +139,9 @@ Ajala/
 
 ## 📚 Service Categories (55 Active Records)
 
-1. **Admission** (10 records): ND full-time cut-offs, Part-time/evening entry, HND requirements (Lower credit + 1-yr IT, Pass + 2-yr IT), ₦45,000 acceptance fee, academic schools.
-2. **School Fees** (7 records): Remita payment procedures, RRR generation, payment verification, resolving pending debits, support contacts.
-3. **Course Registration** (6 records): Portal steps, credit unit limits (15 min – 24 max), Add/Drop window, approval signatures.
+1. **Admission** (10 records): ND full-time cut-offs, Part-time/evening entry, HND requirements, ₦45,000 acceptance fee.
+2. **School Fees** (7 records): Remita payment procedures, RRR generation, payment verification, pending debits.
+3. **Course Registration** (6 records): Portal steps, credit unit limits (15 min – 24 max), Add/Drop window.
 4. **Examination** (6 records): 75% attendance rule, exam eligibility, carryovers, official NBTE grading scale.
 5. **Academic Calendar** (5 records): 15-week semester structure, Rector Engr. Dr. Temitope John Alake, Registry, Bursary.
 6. **Hostel Services** (3 records): Abuja Hall of Residence, Student Affairs allocation, prohibited appliances.
@@ -161,6 +150,24 @@ Ajala/
 9. **ICT Support** (6 records): Helpdesk phone (07088391544, 09083892022), support emails, password recovery.
 10. **Transcript Services** (2 records): Online transcript application, verification, dispatch.
 11. **Graduation Requirements** (4 records): Minimum 2.00 CGPA, 6-unit institutional clearance, NYSC mobilization.
+
+---
+
+## 🧪 Automated Testing
+
+Run the automated verification suite against backend & AI endpoints:
+```bash
+node backend/src/e2e_verification.js
+```
+*(Validates 14 checks: backend health, AI health, categories, KB search, admin login, analytics, KB Create, Update, Delete, student registration, authenticated chat, history retrieval, feedback submission, and static serving — 14 Passed, 0 Failed).*
+
+---
+
+## 👤 Project Author
+
+- **AJALA JOSHUA OLUWAFERANMI** (Matric No: `FPA/CS/24/3-0089`)
+- **Department**: Computer Science, The Federal Polytechnic, Ado-Ekiti
+- **Admin Contact**: `joshua@ajala.com`nts** (4 records): Minimum 2.00 CGPA, 6-unit institutional clearance, NYSC mobilization.
 
 ---
 
