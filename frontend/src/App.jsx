@@ -515,105 +515,110 @@ function Home() {
   const serviceCategories = [
     {
       code: 'ADM',
-      name: 'Admissions & Screening',
-      desc: 'Entry requirements for National Diploma (ND) and Higher National Diploma (HND), Post-UTME screening, cut-off marks, and verification of admission lists.',
-      sampleQuery:
-        'What are the admission requirements for ND programmes?',
-    },
-    {
-      code: 'FEE',
-      name: 'Tuition & Payment Services',
-      desc: 'Official schedule of institutional fees, invoice generation on the portal, Remita confirmation, and guidance for payment disputes.',
-      sampleQuery:
-        'How do I pay school fees and resolve payment issues?',
+      name: 'Admission',
+      desc: 'Get admission information & entry requirements',
+      sampleQuery: 'What are the admission requirements for ND programmes?',
+      icon: <Icons.Users />,
     },
     {
       code: 'REG',
-      name: 'Course Registration',
-      desc: 'Online semester registration procedures, credit unit limits, add/drop windows, departmental advisor sign-offs, and compliance deadlines.',
-      sampleQuery:
-        'How do I register my courses on the student portal?',
+      name: 'Registration',
+      desc: 'Course registration guidance & semester windows',
+      sampleQuery: 'How do I register my courses on the student portal?',
+      icon: <Icons.BookOpen />,
+    },
+    {
+      code: 'FEE',
+      name: 'School Fees',
+      desc: 'Fee payment information & Remita confirmation',
+      sampleQuery: 'How do I pay school fees and resolve payment issues?',
+      icon: <Icons.ShieldCheck />,
     },
     {
       code: 'EXM',
-      name: 'Examinations & MIS Results',
-      desc: 'Semester timetable releases, hall requirements, and accessing official approved grades on the Academic Results Management Portal (MIS).',
-      sampleQuery:
-        'Where can I check approved semester results on the MIS portal?',
+      name: 'Examination',
+      desc: 'Examination schedules & academic rules',
+      sampleQuery: 'Where can I check approved semester results on the MIS portal?',
+      icon: <Icons.Sparkles />,
     },
     {
-      code: 'ACC',
-      name: 'Hostel Accommodation',
-      desc: 'Application criteria for on-campus student residential quarters, room space allocation, fee guidelines, and Student Affairs clearances.',
-      sampleQuery:
-        'How do I apply for campus hostel accommodation?',
+      code: 'SIWES',
+      name: 'SIWES & Industrial',
+      desc: 'SIWES requirements & placement procedures',
+      sampleQuery: 'What are the SIWES requirements and procedures?',
+      icon: <Icons.Globe />,
     },
     {
-      code: 'ICT',
-      name: 'Portal & Technical Support',
-      desc: 'Student account credential recovery, institution email management, and technical helpdesk contacts for academic systems.',
-      sampleQuery:
-        'I cannot log in to my student portal account. What should I do?',
+      code: 'GEN',
+      name: 'General Info',
+      desc: 'Other academic & student affairs information',
+      sampleQuery: 'Where is the school located and how do I contact support?',
+      icon: <Icons.Search />,
     },
   ];
 
   return (
     <main className="landing-layout">
-      <section className="institutional-hero">
-        <div className="institution-flag">
-          <span className="live-pulse-dot"></span>
-          The Federal Polytechnic, Ado-Ekiti &middot; Directorate of Academic &amp; Student Affairs
-        </div>
+      {/* 2-Column Split Hero Section matching user reference image */}
+      <section className="institutional-hero split-hero-layout">
+        <div className="hero-left-column">
+          <div className="institution-flag">
+            <span className="live-pulse-dot"></span>
+            The Federal Polytechnic, Ado-Ekiti &middot; AI Service Assistant
+          </div>
 
-        <h1 className="hero-title">
-          FPA Student Information &amp; Administrative Helpdesk
-        </h1>
+          <h1 className="hero-title">
+            Welcome to <span className="highlight-emerald">AI-Powered Educational Service Assistant</span>
+          </h1>
 
-        <p className="hero-lead">
-          Official institutional service assistant providing immediate,
-          verified guidance on admissions, fee schedules, course
-          registrations, examinations, and student support.
-        </p>
+          <p className="hero-lead">
+            Your smart assistant for all academic and administrative enquiries in The Federal Polytechnic Ado-Ekiti.
+            Get instant answers to your questions anytime, anywhere.
+          </p>
 
-        <div className="hero-cta-row">
-          <Link to="/chat" className="btn-cta-primary">
-            <span>Access Student Helpdesk</span>
-            <Icons.ArrowRight />
-          </Link>
+          <div className="hero-cta-group">
+            <Link to="/chat" className="btn-cta-primary">
+              <span>Chat with Assistant</span>
+              <Icons.ArrowRight />
+            </Link>
+          </div>
 
           <div className="frequent-topics-wrap">
-            <span className="topics-heading">Common inquiries:</span>
-
+            <span className="topics-heading">Common Inquiries:</span>
             <button
               className="topic-btn"
-              onClick={() =>
-                handleConsult(
-                  'What are the admission requirements for ND programmes?'
-                )
-              }
+              onClick={() => handleConsult('What are the admission requirements for ND programmes?')}
             >
-              ND Admission Requirements
+              ND Admissions
             </button>
-
             <button
               className="topic-btn"
               onClick={() => handleConsult('How do I pay school fees?')}
             >
-              School Fees &amp; Remita
+              School Fees
             </button>
-
             <button
               className="topic-btn"
-              onClick={() =>
-                handleConsult('Where can I check my semester results?')
-              }
+              onClick={() => handleConsult('Where can I check my semester results?')}
             >
-              MIS Semester Results
+              MIS Results
             </button>
+          </div>
+        </div>
+
+        <div className="hero-right-column">
+          <div className="mascot-wrapper">
+            <div className="mascot-backdrop-shape"></div>
+            <img
+              src="/mascot.jpg"
+              alt="FPA AI Student Assistant Mascot"
+              className="mascot-img"
+            />
           </div>
         </div>
       </section>
 
+      {/* Institutional Stats Strip */}
       <section className="institutional-stats-strip">
         <div className="stat-pill-item">
           <div className="stat-pill-icon"><Icons.ShieldCheck /></div>
@@ -648,52 +653,35 @@ function Home() {
         </div>
       </section>
 
-      <section className="directory-section">
-        <div className="directory-header">
-          <h2>Institutional Administrative Services</h2>
-
-          <p>
-            Select any category below to consult verified institutional
-            guidelines or submit a query directly.
-          </p>
-        </div>
-
-        <div className="directory-grid">
+      {/* Bottom Service Strip matching user reference image */}
+      <section className="bottom-services-bar">
+        <div className="services-bar-inner">
           {serviceCategories.map((cat) => (
-            <article
+            <div
               key={cat.code}
-              className="directory-card"
+              className="service-bar-item"
               onClick={() => handleConsult(cat.sampleQuery)}
             >
-              <div className="card-top-meta">
-                <span className="cat-code">{cat.code}</span>
-
-                <span className="card-action-cue">
-                  Inquire <Icons.ArrowRight />
-                </span>
+              <div className="service-icon-box">{cat.icon}</div>
+              <div className="service-text-block">
+                <span className="service-title">{cat.name}</span>
+                <span className="service-desc">{cat.desc}</span>
               </div>
-
-              <h3 className="card-title">{cat.name}</h3>
-
-              <p className="card-text">{cat.desc}</p>
-            </article>
+            </div>
           ))}
         </div>
       </section>
 
       <section className="official-disclaimer-strip">
         <p>
-          Official portal of The Federal Polytechnic, Ado-Ekiti (Ekiti
-          State, Nigeria). For formal notices and direct circulars,
-          reference the institutional website at{' '}
+          Official portal of The Federal Polytechnic, Ado-Ekiti (Ekiti State, Nigeria). For formal notices and direct circulars, reference the institutional website at{' '}
           <a
             href="https://fedpolyado.edu.ng"
             target="_blank"
             rel="noopener noreferrer"
           >
             fedpolyado.edu.ng
-          </a>
-          .
+          </a>.
         </p>
       </section>
     </main>
