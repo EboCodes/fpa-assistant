@@ -143,25 +143,39 @@ class ResponseGenerator:
         if not query_words:
             return False
 
+        stopwords = {
+            "the", "and", "is", "are", "was", "were", "where", "what", "how", "who", "when",
+            "why", "which", "do", "does", "did", "can", "could", "would", "should", "school",
+            "polytechnic", "institution", "federal", "ado", "ekiti", "fpa", "about", "for",
+            "with", "from", "that", "this", "have", "has", "had", "get", "tell", "give", "know", "please"
+        }
+
+        significant_words = set(w for w in query_words if w not in stopwords)
+        if not significant_words:
+            significant_words = query_words
+
         top_entry = kb_entries[0]
         question = str(top_entry.get("question", "")).lower()
-        answer = str(top_entry.get("answer", "")).lower()
         keywords = str(top_entry.get("keywords", "")).lower()
+        answer = str(top_entry.get("answer", "")).lower()
 
         # If exact query string matches question or keywords
         if query_clean in question or query_clean in keywords:
             return True
 
-        # Calculate word match ratio
+        # Calculate word match ratio against question and keywords specifically
         matched = 0
-        for word in query_words:
-            if word in question or word in keywords or word in answer:
+        for word in significant_words:
+            if word in question or word in keywords:
+                matched += 2
+            elif word in answer:
                 matched += 1
 
-        match_ratio = matched / len(query_words)
+        max_possible = len(significant_words) * 2
+        match_ratio = matched / max_possible if max_possible > 0 else 0
 
-        # Require at least 50% keyword match or minimum 2 matched significant words
-        return match_ratio >= 0.5 or (len(query_words) >= 2 and matched >= 2)
+        # Require at least 50% match on specific non-stopword intent terms
+        return match_ratio >= 0.5
 
     def _extract_sources_from_gemini_response(
         self,

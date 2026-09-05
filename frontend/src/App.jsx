@@ -12,8 +12,10 @@ import axios from 'axios';
 import './App.css';
 import { parseInlineText } from './responseFormatting.jsx';
 
+const API_BASE = import.meta.env.VITE_API_URL || 'https://fpa-backend-s09g.onrender.com';
+
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || '',
+  baseURL: API_BASE,
 });
 
 api.interceptors.request.use((config) => {
