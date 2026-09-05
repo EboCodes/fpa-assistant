@@ -47,6 +47,8 @@ export function parseInlineText(str = '') {
             {link[1]}
           </a>
         );
+      } else {
+        parts.push(token);
       }
     } else if (
       token.startsWith('**') &&

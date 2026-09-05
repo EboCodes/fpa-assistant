@@ -35,10 +35,11 @@ class ResponseGenerator:
 
         # Gemini model fallback order
         self.gemini_models = [
-            "models/gemini-flash-lite-latest",
+            "models/gemini-2.5-flash",
             "models/gemini-3.7-flash",
             "models/gemini-3.6-flash",
             "models/gemini-flash-latest",
+            "models/gemini-flash-lite-latest",
         ]
 
         logger.info(
@@ -747,10 +748,10 @@ points before finishing.
                         context,
                         generation_config={
                             "temperature": 0.25,
-                            "max_output_tokens": 1000,
+                            "max_output_tokens": 3072,
                         },
                         request_options={
-                            "timeout": 20
+                            "timeout": 35
                         }
                     )
 
@@ -951,7 +952,11 @@ points before finishing.
         if len(clean) < 20:
             return False
 
-        # Obvious malformed endings
+        # Check for unclosed markdown links cut off mid-url e.g. "[https" or "[text]("
+        if re.search(r"\[https?:\/\/[^\s\]]*$", clean) or re.search(r"\[[^\]]{1,100}$", clean):
+            return False
+
+        # Obvious malformed endings or trailing prepositions from truncation
         bad_endings = (
             "-",
             "*",
@@ -962,6 +967,16 @@ points before finishing.
         )
 
         if clean.endswith(bad_endings):
+            return False
+
+        words = clean.split()
+        if words:
+            last_word = words[-1].lower()
+            if last_word in {"at", "the", "and", "or", "to", "of", "in", "for", "with"}:
+                return False
+
+        # Detect incomplete numbered list item at the end e.g. "1." or "2. "
+        if re.search(r"\n\d+\.\s*$", clean):
             return False
 
         # Detect empty bullet lines
