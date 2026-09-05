@@ -61,6 +61,45 @@ const admin = [
 app.get("/health", (req, res) =>
   res.json({ status: "API is running", timestamp: new Date() }),
 );
+const ensureDefaultAdmin = async () => {
+  try {
+    const adminEmail = (process.env.ADMIN_EMAIL || "joshua@ajala.com").trim().toLowerCase();
+    const adminPassword = process.env.ADMIN_PASSWORD || "Admin123!";
+    const adminName = "Institutional Administrator";
+
+    const existing = await db.oneOrNone("SELECT id, email, password, role FROM users WHERE email=$1", [adminEmail]);
+
+    if (!existing) {
+      const hashed = await bcrypt.hash(adminPassword, 12);
+      await db.none(
+        "INSERT INTO users(name, email, password, role) VALUES($1, $2, $3, 'admin')",
+        [adminName, adminEmail, hashed]
+      );
+      console.log(`[AUTH] Auto-seeded default admin user: ${adminEmail}`);
+    } else {
+      const isPasswordValid = await bcrypt.compare(adminPassword, existing.password);
+      if (!isPasswordValid || existing.role !== 'admin') {
+        const hashed = await bcrypt.hash(adminPassword, 12);
+        await db.none(
+          "UPDATE users SET role='admin', password=$1, updated_at=CURRENT_TIMESTAMP WHERE id=$2",
+          [hashed, existing.id]
+        );
+        console.log(`[AUTH] Synchronized default admin credentials for: ${adminEmail}`);
+      }
+    }
+  } catch (err) {
+    console.error("[AUTH] Warning: Default admin seeding:", err.message);
+  }
+};
+
+app.post(
+  "/api/auth/init-admin",
+  wrap(async (req, res) => {
+    await ensureDefaultAdmin();
+    res.json({ success: true, message: "Default admin user initialized" });
+  })
+);
+
 app.post(
   "/api/auth/register",
   wrap(async (req, res) => {
@@ -70,7 +109,7 @@ app.post(
         error: "Name, email, and an 8-character password are required",
       });
     email = email.trim().toLowerCase();
-    const admins = (process.env.ADMIN_EMAILS || process.env.ADMIN_EMAIL || "")
+    const admins = (process.env.ADMIN_EMAILS || process.env.ADMIN_EMAIL || "joshua@ajala.com")
         .split(",")
         .map((x) => x.trim().toLowerCase()),
       role = admins.includes(email) ? "admin" : "student",
@@ -84,9 +123,16 @@ app.post(
 app.post(
   "/api/auth/login",
   wrap(async (req, res) => {
-    const user = await db.oneOrNone("SELECT * FROM users WHERE email=$1", [
-      req.body.email?.trim().toLowerCase(),
-    ]);
+    const email = req.body.email?.trim().toLowerCase();
+    let user = await db.oneOrNone("SELECT * FROM users WHERE email=$1", [email]);
+
+    // Auto-seed admin if logging in with expected admin email and missing
+    const defaultAdminEmail = (process.env.ADMIN_EMAIL || "joshua@ajala.com").trim().toLowerCase();
+    if (!user && email === defaultAdminEmail) {
+      await ensureDefaultAdmin();
+      user = await db.oneOrNone("SELECT * FROM users WHERE email=$1", [email]);
+    }
+
     if (
       !user ||
       !(await bcrypt.compare(req.body.password || "", user.password))
@@ -472,6 +518,7 @@ if (require.main === module) {
   );
   const server = app.listen(PORT, () => {
     console.log(`Backend running on :${PORT}`);
+    ensureDefaultAdmin();
     // Keep AI service warm every 8 minutes
     setInterval(() => {
       const aiUrl = process.env.AI_SERVICE_URL || "http://localhost:5001";
